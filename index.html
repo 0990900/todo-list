@@ -7,7 +7,7 @@
   <script type="text/javascript" src="js/modules.js"></script>
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
-    require(['func', 'option', 'pubsub', 'todolist'], (f, Option, PubSub, TodoList) => {
+    require(['func', 'option', 'pubsub', 'todolist'], function (f, Option, PubSub, TodoList) {
       window.onloadafter(() => {
         f.compose(Option.of, document.byId)('todo-input')
           .tab(el => el.focus())

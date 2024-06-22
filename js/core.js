@@ -2,6 +2,15 @@
   const modules = {};
   const cache = {};
 
+  const suspend = (func, ...args) => () => func(...args)
+  const trampoline = func => (...args) => {
+    let result = func(...args);
+    while (typeof result === 'function') {
+      result = result();
+    }
+    return result;
+  }
+
   const define = (name, dependencies, factory) => {
     if (typeof name !== 'string') {
       throw new Error('Module name must be a string type');
@@ -24,11 +33,16 @@
       if (!module) {
         throw new Error(`Module ${dependency} has not been defined`);
       }
-      const moduleInstance = module.factory.apply(global, module.dependencies.map(resolve));
-      cache[dependency] = moduleInstance;
-      return moduleInstance;
+      return suspend(() => {
+        const resolver = trampoline(resolve);
+        const moduleInstance = module.factory.apply(global, module.dependencies.map(resolver));
+        cache[dependency] = moduleInstance;
+        console.log(`dependency resolved - ${dependency}`);
+        return moduleInstance;
+      });
     }
-    callback.apply(global, dependencies.map(resolve));
+    const resolver = trampoline(resolve);
+    callback.apply(global, dependencies.map(resolver));
   }
   global.define = define;
   global.require = require;

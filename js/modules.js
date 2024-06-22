@@ -1,4 +1,4 @@
-define('func', [], () => {
+define('func', [], function () {
   const compose = (...fs) => x => fs.reverse().reduce((acc, f) => f(acc), x);
   const identity = x => x;
   return {
@@ -6,7 +6,7 @@ define('func', [], () => {
   };
 });
 
-define('option', ['func'], func => {
+define('option', ['func'], function (func) {
   const isFunc = (...fs) => fs.reduce((acc, f) => typeof f === 'function', true)
   const Some = value => ({
     map: f => isFunc(f) ? handleError(() => f(value), option.of, None) : None(),
@@ -69,7 +69,7 @@ define('option', ['func'], func => {
   return option;
 });
 
-define('pubsub', [], () => {
+define('pubsub', [], function () {
   const events = {};
   return {
     subscribe: (event, listener) => {
@@ -91,7 +91,7 @@ define('pubsub', [], () => {
   }
 });
 
-define('todolist', ['func', 'option', 'pubsub'], (f, Option, PubSub) => {
+define('todolist', ['func', 'option', 'pubsub'], function (f, Option, PubSub) {
   class Todo {
     constructor(subject) {
       this.id = crypto.randomUUID();
@@ -99,6 +99,7 @@ define('todolist', ['func', 'option', 'pubsub'], (f, Option, PubSub) => {
       this.subject = subject;
       this.createdAt = new Date();
     }
+
     pasted() {
       const timeDiff = new Date() - this.createdAt;
       if (timeDiff > Millis.oneDay) {
