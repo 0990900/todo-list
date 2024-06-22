@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Todo List</title>
+  <script type="text/javascript" src="js/func.js"></script>
+  <script type="text/javascript" src="js/pubsub.js"></script>
+  <script type="text/javascript" src="js/helper.js"></script>
+  <script type="text/javascript" src="js/todo.js"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script type="text/javascript">
+    $win.onload(() => {
+      compose(Option.of, $doc.byId)('todo-input')
+        .tab(el => el.focus())
+        .tab(el => {
+          el.addEventListener('keydown', e => {
+            if (!e.isComposing && e.key === 'Enter') {
+              PubSub.publish('entered', el.value);
+              el.value = "";
+            }
+          });
+        });
+      compose(Option.of, $doc.byId)('todo-list')
+        .tab(el => {
+          el.addEventListener('click', event => {
+            if (event.target.type === 'checkbox') {
+              PubSub.publish('toggle', event.target.id, event.target.checked);
+            }
+          });
+        });
+    });
+    const mainTodoList = TodoList.of(PubSub, TodoList.render('todo-list'));
+  </script>
+</head>
+<body>
+<h3>Todo List</h3>
+<div>
+  <label for="todo-input"></label>
+  <input type="text" id="todo-input" placeholder="어떤 일을 해야 하나요?">
+</div>
+<div>
+  <ul id="todo-list"></ul>
+</div>
+</body>
+
+</html>

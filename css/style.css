@@ -1,0 +1,22 @@
+#todo-input {
+  border: none;
+  border-bottom: 2px solid gray;
+  width: 280px;
+  font-size: large;
+  font-weight: bold;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 10px;
+}
+
+li {
+  padding-top: 10px;
+}
+
+div.controls {
+  padding-left: 20px;
+  font-size: smaller;
+  color: gray;
+}
