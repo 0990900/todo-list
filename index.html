@@ -4,32 +4,32 @@
   <meta charset="utf-8">
   <title>Todo List</title>
   <script type="text/javascript" src="js/core.js"></script>
-  <script type="text/javascript" src="js/func.js"></script>
-  <script type="text/javascript" src="js/pubsub.js"></script>
-  <script type="text/javascript" src="js/todo.js"></script>
+  <script type="text/javascript" src="js/modules.js"></script>
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
-    window.onloadafter(() => {
-      compose(Option.of, document.byId)('todo-input')
-        .tab(el => el.focus())
-        .tab(el => {
-          el.addEventListener('keydown', e => {
-            if (!e.isComposing && e.key === 'Enter') {
-              PubSub.publish('entered', el.value);
-              el.value = "";
-            }
+    require(['func', 'option', 'pubsub', 'todolist'], (f, Option, PubSub, TodoList) => {
+      window.onloadafter(() => {
+        f.compose(Option.of, document.byId)('todo-input')
+          .tab(el => el.focus())
+          .tab(el => {
+            el.addEventListener('keydown', e => {
+              if (!e.isComposing && e.key === 'Enter') {
+                PubSub.publish('entered', el.value);
+                el.value = "";
+              }
+            });
           });
-        });
-      compose(Option.of, document.byId)('todo-list')
-        .tab(el => {
-          el.addEventListener('click', event => {
-            if (event.target.type === 'checkbox') {
-              PubSub.publish('toggle', event.target.id, event.target.checked);
-            }
+        f.compose(Option.of, document.byId)('todo-list')
+          .tab(el => {
+            el.addEventListener('click', event => {
+              if (event.target.type === 'checkbox') {
+                PubSub.publish('toggle', event.target.id, event.target.checked);
+              }
+            });
           });
-        });
+      });
+      const mainTodoList = TodoList.of('todo-list');
     });
-    const mainTodoList = TodoList.of(PubSub, TodoList.render('todo-list'));
   </script>
 </head>
 <body>
