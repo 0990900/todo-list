@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>Todo List</title>
+  <script type="text/javascript" src="js/core.js"></script>
   <script type="text/javascript" src="js/func.js"></script>
   <script type="text/javascript" src="js/pubsub.js"></script>
-  <script type="text/javascript" src="js/helper.js"></script>
   <script type="text/javascript" src="js/todo.js"></script>
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
-    $win.onload(() => {
-      compose(Option.of, $doc.byId)('todo-input')
+    window.onloadafter(() => {
+      compose(Option.of, document.byId)('todo-input')
         .tab(el => el.focus())
         .tab(el => {
           el.addEventListener('keydown', e => {
@@ -20,7 +20,7 @@
             }
           });
         });
-      compose(Option.of, $doc.byId)('todo-list')
+      compose(Option.of, document.byId)('todo-list')
         .tab(el => {
           el.addEventListener('click', event => {
             if (event.target.type === 'checkbox') {
