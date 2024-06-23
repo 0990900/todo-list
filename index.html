@@ -10,7 +10,6 @@
     require(['func', 'option', 'pubsub', 'todolist'], function (f, Option, PubSub, TodoList) {
       window.onloadafter(() => {
         f.compose(Option.of, document.byId)('todo-input')
-          .tab(el => el.focus())
           .tab(el => {
             el.addEventListener('keydown', e => {
               if (!e.isComposing && e.key === 'Enter') {
@@ -18,29 +17,30 @@
                 el.value = "";
               }
             });
-          });
+          })
+          .tab(el => el.focus());
         f.compose(Option.of, document.byId)('todo-list')
           .tab(el => {
             el.addEventListener('click', event => {
               if (event.target.type === 'checkbox') {
                 PubSub.publish('toggle', event.target.id, event.target.checked);
               }
+              if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
+                PubSub.publish('remove', event.target.getAttribute("for"));
+              }
             });
           });
-        const mainTodoList = TodoList.of('todo-list');
+        const mainTodoList = TodoList.of('todo-list', 'todo-input');
       });
     });
   </script>
 </head>
 <body>
-<h3>Todo List</h3>
 <div>
   <label for="todo-input"></label>
   <input type="text" id="todo-input" placeholder="어떤 일을 해야 하나요?">
 </div>
-<div>
-  <ul id="todo-list"></ul>
-</div>
+<div id="todo-list"></div>
 </body>
 
 </html>

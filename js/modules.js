@@ -118,7 +118,8 @@ define('dateformat', [], function () {
     }
     return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, matched => transform(date)[matched] || '');
   }
-  return {formatter};
+  return {
+    formatter};
 });
 
 define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Option, PubSub, dateformat) {
@@ -133,62 +134,110 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
 
   const render = elementId => todoList => {
     f.compose(Option.of, document.byId)(elementId)
-      .tab(el => el.innerHTML = "")
+      .tab(el => el.innerHTML = `<div id="ready-list">
+        <ul></ul>
+      </div>
+      <div id="done-list">
+        <ul></ul>
+      </div>`)
       .tab(el => {
-        todoList.forEach(todo => {
-          const li = Option.of(document.create('li')).getOrThrow();
-          const div1 = Option.of(document.create('div')).getOrThrow();
-          const div2 = Option.of(document.create('div'))
-            .tab($div => {
-              $div.className = "controls";
-              $div.textContent = dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss');
-            }).getOrThrow();
-          const input = Option.of(document.create('input'))
-            .tab($input => {
-              $input.id = todo.id;
-              $input.type = "checkbox";
-              $input.checked = todo.done;
-            }).getOrThrow();
-          const label = Option.of(document.create('label'))
-            .tab($label => {
-              $label.setAttribute('for', todo.id);
-              $label.textContent = todo.subject;
-            }).getOrThrow();
-          div1.appendChild(input);
-          div1.appendChild(label);
-          li.appendChild(div1);
-          li.appendChild(div2);
-          el.appendChild(li);
-        });
+        const ulList = el.getElementsByTagName('ul');
+        ulList[0].innerHTML = todoList.ready.map(todo => {
+          return `<li>
+            <div class="todo">
+                <input type="checkbox" id="${todo.id}">
+                <label for="${todo.id}">${todo.subject}</label>
+            </div>
+            <div class="controls">
+                ${dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
+                | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+            </div>
+          </li>`
+        }).join('');
+        ulList[1].innerHTML = todoList.done.map(todo => {
+          return `<li>
+            <div class="todo">
+                <input type="checkbox" id="${todo.id}" checked>
+                <label>${todo.subject}</label>
+            </div>
+            <div class="controls">
+                ${dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
+                | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+            </div>
+          </li>`
+        }).join('');
+        if (todoList.done.length > 0) {
+          ulList[1].parentNode.className = "box";
+        }
       });
   };
 
   return {
-    of: el => {
-      const list = JSON.parse(localStorage.getItem('todolist')) || [];
+    of: (elList, elInput) => {
+      const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
       const add = subject => {
-        const exist = list.some(item => item.subject === subject);
+        const subjectTrimmed = subject.trim();
+        if (!subjectTrimmed) {
+          return;
+        }
+        const exist = todolist.ready.some(item => item.subject === subjectTrimmed);
         if (exist) {
           return;
         }
-        list.push(new Todo(subject));
-        list.sort((a, b) => b.createdAt - a.createdAt);
-        localStorage.setItem('todolist', JSON.stringify(list));
-        PubSub.publish('render', list);
+        todolist.ready.push(new Todo(subjectTrimmed));
+        todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
+        localStorage.setItem('todolist', JSON.stringify(todolist));
+        PubSub.publish('render', todolist);
       }
-      const toggle = (id, value) => Option
-        .of(list.find(todo => todo.id === id))
-        .tab(todo => {
+      const toggle = (id, value) => {
+        if (value) {
+          const idx = todolist.ready.findIndex(todo => todo.id === id);
+          if (idx < 0) {
+            return;
+          }
+          const todo = todolist.ready[idx];
           todo.done = value;
-          PubSub.publish('render', list);
-        });
-      const renderer = render(el);
+          todolist.ready.splice(idx, 1);
+          todolist.done.push(todo);
+        } else {
+          const idx = todolist.done.findIndex(todo => todo.id === id);
+          if (idx < 0) {
+            return;
+          }
+          const todo = todolist.done[idx];
+          todo.done = value;
+          todolist.done.splice(idx, 1);
+          todolist.ready.push(todo);
+        }
+        localStorage.setItem('todolist', JSON.stringify(todolist));
+        PubSub.publish('render', todolist);
+      };
+      const remove = id => {
+        const removeInner = (array, id) => {
+          const idx = array.findIndex(todo => todo.id === id);
+          if (idx < 0) {
+            return false;
+          }
+          array.splice(idx, 1);
+          return true;
+        }
+        const result = removeInner(todolist.ready, id) || removeInner(todolist.done, id);
+        if (result) {
+          localStorage.setItem('todolist', JSON.stringify(todolist));
+          PubSub.publish('render', todolist);
+          document.byId(elInput).focus();
+        } else {
+          alert(`Todolist(${id}) not found`);
+        }
+      }
+      const renderer = render(elList);
       PubSub.subscribe('entered', add);
       PubSub.subscribe('toggle', toggle);
+      PubSub.subscribe('remove', remove);
       PubSub.subscribe('render', renderer);
-      renderer(list);
+      renderer(todolist);
       return {
-        print: () => list.forEach(console.log)
+        print: () => todolist.ready.forEach(console.log)
       };
     },
     render

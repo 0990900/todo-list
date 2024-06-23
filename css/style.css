@@ -1,7 +1,9 @@
 #todo-input {
+  margin-top: 20px;
+  margin-left: 10px;
   border: none;
   border-bottom: 2px solid gray;
-  width: 280px;
+  width: 380px;
   font-size: large;
   font-weight: bold;
 }
@@ -15,8 +17,33 @@ li {
   padding-top: 10px;
 }
 
+div.todo > label {
+  padding-left: 4px;
+}
+
 div.controls {
-  padding-left: 20px;
+  padding-left: 28px;
   font-size: smaller;
   color: gray;
+}
+
+div.controls > a {
+  color: gray;
+}
+
+#ready-list {
+
+}
+
+#done-list {
+  padding: 2px;
+}
+
+div.box {
+  background-color: lightgrey;
+  border-radius: 10px;
+}
+
+#done-list label {
+  text-decoration: line-through;
 }
