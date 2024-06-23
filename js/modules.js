@@ -42,7 +42,7 @@ define('option', ['func'], function (func) {
     getOrThrow: _ => {
       throw new Error('Can\'t get value from none');
     },
-    tab: _ => undefined,
+    tab: _ => None(),
     isSome: false,
     isNone: true
   });
@@ -127,11 +127,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
       this.id = crypto.randomUUID();
       this.done = false;
       this.subject = subject;
-      this.createdAt = new Date();
-    }
-
-    created() {
-      return dateformat.formatter(this.createdAt, 'YYYY-MM-DD HH:mm:ss')
+      this.createdAt = new Date().getTime();
     }
   }
 
@@ -145,7 +141,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
           const div2 = Option.of(document.create('div'))
             .tab($div => {
               $div.className = "controls";
-              $div.textContent = todo.created();
+              $div.textContent = dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss');
             }).getOrThrow();
           const input = Option.of(document.create('input'))
             .tab($input => {
@@ -169,9 +165,15 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
 
   return {
     of: el => {
-      const list = [];
+      const list = JSON.parse(localStorage.getItem('todolist')) || [];
       const add = subject => {
+        const exist = list.some(item => item.subject === subject);
+        if (exist) {
+          return;
+        }
         list.push(new Todo(subject));
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        localStorage.setItem('todolist', JSON.stringify(list));
         PubSub.publish('render', list);
       }
       const toggle = (id, value) => Option
@@ -180,9 +182,11 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
           todo.done = value;
           PubSub.publish('render', list);
         });
+      const renderer = render(el);
       PubSub.subscribe('entered', add);
       PubSub.subscribe('toggle', toggle);
-      PubSub.subscribe('render', render(el));
+      PubSub.subscribe('render', renderer);
+      renderer(list);
       return {
         print: () => list.forEach(console.log)
       };
