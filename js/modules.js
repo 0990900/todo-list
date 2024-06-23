@@ -173,7 +173,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
   };
 
   return {
-    of: (elList, elInput) => {
+    of: (elList, focus) => {
       const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
       const add = subject => {
         const subjectTrimmed = subject.trim();
@@ -225,7 +225,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
         if (result) {
           localStorage.setItem('todolist', JSON.stringify(todolist));
           PubSub.publish('render', todolist);
-          document.byId(elInput).focus();
+          focus();
         } else {
           alert(`Todolist(${id}) not found`);
         }
