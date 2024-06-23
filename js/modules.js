@@ -72,12 +72,22 @@ define('option', ['func'], function (func) {
 define('pubsub', [], function () {
   const events = {};
   return {
+    /**
+     * Registering the event and event listener.
+     * @param event
+     * @param listener
+     */
     subscribe: (event, listener) => {
       if (!events[event]) {
         events[event] = [];
       }
       events[event].push(listener);
     },
+    /**
+     * Passing date to the registered event listener.
+     * @param event
+     * @param data
+     */
     publish: (event, ...data) => {
       if (events[event]) {
         console.log(`[PubSub] publish event: ${event}`, data);
@@ -91,7 +101,27 @@ define('pubsub', [], function () {
   }
 });
 
-define('todolist', ['func', 'option', 'pubsub'], function (f, Option, PubSub) {
+define('dateformat', [], function () {
+  const isDate = date => date instanceof Date && !isNaN(date.getTime());
+  const transform = date => ({
+    'YYYY': date.getFullYear(),
+    'MM': ('0' + (date.getMonth() + 1)).slice(-2),
+    'DD': ('0' + date.getDate()).slice(-2),
+    'HH': ('0' + date.getHours()).slice(-2),
+    'mm': ('0' + date.getMinutes()).slice(-2),
+    'ss': ('0' + date.getSeconds()).slice(-2),
+    'SSS': ('00' + date.getMilliseconds()).slice(-3)
+  });
+  const formatter = (date, format) => {
+    if (!isDate(date)) {
+      throw new Error('Can\'t format if it is not a Date object');
+    }
+    return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, matched => transform(date)[matched] || '');
+  }
+  return {formatter};
+});
+
+define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Option, PubSub, dateformat) {
   class Todo {
     constructor(subject) {
       this.id = crypto.randomUUID();
@@ -100,28 +130,9 @@ define('todolist', ['func', 'option', 'pubsub'], function (f, Option, PubSub) {
       this.createdAt = new Date();
     }
 
-    pasted() {
-      const timeDiff = new Date() - this.createdAt;
-      if (timeDiff > Millis.oneDay) {
-        const dayDiff = Math.floor(timeDiff / Millis.oneDay);
-        return `${dayDiff}일 전 추가됨`;
-      } else if (timeDiff > Millis.oneHour) {
-        const hours = Math.floor(timeDiff / Millis.oneHour);
-        return hours ? `${hours}시간 전 추가됨` : "방금 추가됨";
-      } else if (timeDiff > Millis.oneMin) {
-        const minutes = Math.floor(timeDiff / Millis.oneMin);
-        return minutes ? `${minutes}분 전 추가됨` : "방금 추가됨";
-      } else if (timeDiff < Millis.oneHour) {
-        const seconds = Math.floor(timeDiff / 1000);
-        return seconds ? `${seconds}초 전 추가됨` : "방금 추가됨";
-      }
+    created() {
+      return dateformat.formatter(this.createdAt, 'YYYY-MM-DD HH:mm:ss')
     }
-  }
-
-  const Millis = {
-    oneDay: 1000 * 60 * 60 * 24,
-    oneHour: 1000 * 60 * 60,
-    oneMin: 1000 * 60
   }
 
   const render = elementId => todoList => {
@@ -134,7 +145,7 @@ define('todolist', ['func', 'option', 'pubsub'], function (f, Option, PubSub) {
           const div2 = Option.of(document.create('div'))
             .tab($div => {
               $div.className = "controls";
-              $div.textContent = todo.pasted();
+              $div.textContent = todo.created();
             }).getOrThrow();
           const input = Option.of(document.create('input'))
             .tab($input => {
