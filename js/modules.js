@@ -184,11 +184,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       PubSub.publish('todo:render');
       typeof onSuccess === 'function' && onSuccess(result);
     } catch (e) {
-      if (typeof onFailure === 'function') {
-        onFailure(e);
-      } else {
-        console.warn(e);
-      }
+      typeof onFailure === 'function' ? onFailure(e) : console.warn(e);
     }
   }
 
