@@ -143,7 +143,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
     try {
       const result = execute();
       localStorage.setItem('todolist', JSON.stringify(todolist));
-      PubSub.publish('render', todolist);
+      PubSub.publish('todo:render', todolist);
       typeof onSuccess === 'function' && onSuccess(result);
     } catch (e) {
       if (typeof onFailure === 'function') {
@@ -200,7 +200,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
   return {
     of: (elList, focus) => {
       const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
-      const add = subject => {
+      const append = subject => {
         modify(todolist, () => {
           const subjectTrimmed = subject.trim();
           if (!subjectTrimmed) {
@@ -250,10 +250,10 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
         });
       }
       const renderer = render(elList);
-      PubSub.subscribe('entered', add);
-      PubSub.subscribe('toggle', toggle);
-      PubSub.subscribe('remove', remove);
-      PubSub.subscribe('render', renderer);
+      PubSub.subscribe('todo:append', append);
+      PubSub.subscribe('todo:toggle', toggle);
+      PubSub.subscribe('todo:remove', remove);
+      PubSub.subscribe('todo:render', renderer);
       renderer(todolist);
       return {
         print: () => todolist.ready.forEach(console.log)

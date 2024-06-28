@@ -13,7 +13,7 @@
           .tab(el => {
             el.addEventListener('keydown', e => {
               if (!e.isComposing && e.key === 'Enter') {
-                PubSub.publish('entered', el.value);
+                PubSub.publish('todo:append', el.value);
                 el.value = "";
               }
             });
@@ -23,10 +23,10 @@
           .tab(el => {
             el.addEventListener('click', event => {
               if (event.target.type === 'checkbox') {
-                PubSub.publish('toggle', event.target.id, event.target.checked);
+                PubSub.publish('todo:toggle', event.target.id, event.target.checked);
               }
               if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
-                PubSub.publish('remove', event.target.getAttribute("for"));
+                PubSub.publish('todo:remove', event.target.getAttribute("for"));
               }
             });
           });
