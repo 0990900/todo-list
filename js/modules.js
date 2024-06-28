@@ -260,12 +260,11 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
 
   return {
     of: (el, template, onActionSuccess = F.empty) => {
-      const renderer = action.render(el, template);
       PubSub.subscribe('todo:append', action.append(onActionSuccess));
       PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
       PubSub.subscribe('todo:remove', action.remove(onActionSuccess));
-      PubSub.subscribe('todo:render', renderer);
-      renderer();
+      PubSub.subscribe('todo:render', action.render(el, template));
+      PubSub.publish('todo:render');
     }
   }
 });
