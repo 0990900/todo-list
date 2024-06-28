@@ -194,6 +194,9 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
 
   const action = {
     append: onActionSuccess => subject => {
+      if (typeof subject !== 'string') {
+        return;
+      }
       modify(() => {
         const subjectTrimmed = subject.trim();
         if (!subjectTrimmed) {
@@ -251,28 +254,28 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       });
     },
     render: (el, template) => () => {
-      const readyTemplate = Todo.template(template.ready);
-      const doneTemplate = Todo.template(template.done);
-      el.innerHTML = template.base.innerHTML;
-      const ulList = el.getElementsByTagName('ul');
-      ulList[0].innerHTML = todolist.ready.map(readyTemplate).join('');
-      ulList[1].innerHTML = todolist.done.map(doneTemplate).join('');
-      if (todolist.done.length) {
-        ulList[1].parentNode.className = 'box';
+      if (el && template) {
+        const readyTemplate = Todo.template(template.ready);
+        const doneTemplate = Todo.template(template.done);
+        el.innerHTML = template.base.innerHTML;
+        const ulList = el.getElementsByTagName('ul');
+        ulList[0].innerHTML = todolist.ready.map(readyTemplate).join('');
+        ulList[1].innerHTML = todolist.done.map(doneTemplate).join('');
+        if (todolist.done.length) {
+          ulList[1].parentNode.className = 'box';
+        }
       }
     }
   };
 
   return {
     of: (el, template, onActionSuccess = F.empty) => {
-      if (el && template) {
-        const renderer = action.render(el, template);
-        PubSub.subscribe('todo:append', action.append(onActionSuccess));
-        PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
-        PubSub.subscribe('todo:remove', action.remove(onActionSuccess));
-        PubSub.subscribe('todo:render', renderer);
-        renderer();
-      }
+      const renderer = action.render(el, template);
+      PubSub.subscribe('todo:append', action.append(onActionSuccess));
+      PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
+      PubSub.subscribe('todo:remove', action.remove(onActionSuccess));
+      PubSub.subscribe('todo:render', renderer);
+      renderer();
     }
   }
 });
