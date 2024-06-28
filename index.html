@@ -29,7 +29,7 @@
               }
             });
           });
-        const mainTodoList = TodoList.of('todo-list', () => {
+        TodoList.of('todo-list', () => {
           f.compose(Option.of, document.byId)('todo-input')
             .tab(el => el.focus());
         });
