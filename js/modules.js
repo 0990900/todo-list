@@ -192,7 +192,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     }
   }
 
-  const append = subject => {
+  const append = onActionSuccess => subject => {
     modify(() => {
       const subjectTrimmed = subject.trim();
       if (!subjectTrimmed) {
@@ -204,6 +204,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       }
       todolist.ready.push(new Todo(subjectTrimmed));
       todolist.ready.sort(Todo.sorter);
+      onActionSuccess();
     });
   }
 
@@ -265,7 +266,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         }
       };
       const renderer = render(el);
-      PubSub.subscribe('todo:append', append);
+      PubSub.subscribe('todo:append', append(onActionSuccess));
       PubSub.subscribe('todo:toggle', toggle(onActionSuccess));
       PubSub.subscribe('todo:remove', remove(onActionSuccess));
       PubSub.subscribe('todo:render', renderer);
