@@ -133,6 +133,9 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
     }
   }
 
+  /**
+   * 수정이 정상적으로 완료되면 자동으로 로컬 스토리지에 저장 후 렌더링 한다.
+   */
   const modify = (todolist, callback, {onSuccess, onFailure} = {}) => {
     if (typeof callback !== 'function') {
       return;
