@@ -174,7 +174,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
   /**
    * 수정이 정상적으로 완료되면 자동으로 로컬 스토리지에 저장 후 렌더링 한다.
    */
-  const modify = (todolist, execute, {onSuccess, onFailure} = {}) => {
+  const modify = (execute, {onSuccess, onFailure} = {}) => {
     if (typeof execute !== 'function') {
       return;
     }
@@ -193,7 +193,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
   }
 
   const append = subject => {
-    modify(todolist, () => {
+    modify(() => {
       const subjectTrimmed = subject.trim();
       if (!subjectTrimmed) {
         return;
@@ -208,7 +208,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
   }
 
   const toggle = onActionSuccess => (id, value) => {
-    modify(todolist, () => {
+    modify(() => {
       if (value) {
         const idx = todolist.ready.findIndex(todo => todo.id === id);
         if (idx < 0) {
@@ -243,7 +243,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       array.splice(idx, 1);
       return true;
     }
-    modify(todolist, () => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
+    modify(() => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
       onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
     });
   }
