@@ -112,7 +112,7 @@ define('dateformat', [], function () {
     'ss': ('0' + date.getSeconds()).slice(-2),
     'SSS': ('00' + date.getMilliseconds()).slice(-3)
   });
-  const format = (date, format) => {
+  const format = (date, format ='YYYY-MM-DD HH:mm:ss') => {
     if (!isDate(date)) {
       throw new Error('Can\'t format if it is not a Date object');
     }
@@ -154,43 +154,45 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
     }
   }
 
+  const template = {
+    empty: () => `
+      <div id="ready-list">
+          <ul></ul>
+      </div>
+      <div id="done-list">
+          <ul></ul>
+      </div>`,
+    ready: todo => `
+      <li>
+        <div class="todo">
+            <input type="checkbox" id="${todo.id}">
+            <label for="${todo.id}">${todo.subject}</label>
+        </div>
+        <div class="controls">
+            ${Dateformat.format(new Date(todo.createdAt))}
+            | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+        </div>
+      </li>`,
+    done: todo => `
+      <li>
+        <div class="todo">
+            <input type="checkbox" id="${todo.id}" checked>
+            <label>${todo.subject}</label>
+        </div>
+        <div class="controls">
+            ${Dateformat.format(new Date(todo.createdAt))}
+            | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+        </div>
+      </li>`
+  }
+
   const render = elementId => todoList => {
     f.compose(Option.of, document.byId)(elementId)
-      .tab(el => el.innerHTML = `
-        <div id="ready-list">
-            <ul></ul>
-        </div>
-        <div id="done-list">
-            <ul></ul>
-        </div>`)
+      .tab(el => el.innerHTML = template.empty())
       .tab(el => {
         const ulList = el.getElementsByTagName('ul');
-        ulList[0].innerHTML = todoList.ready.map(todo => {
-          return `
-            <li>
-              <div class="todo">
-                  <input type="checkbox" id="${todo.id}">
-                  <label for="${todo.id}">${todo.subject}</label>
-              </div>
-              <div class="controls">
-                  ${Dateformat.format(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
-                  | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
-              </div>
-            </li>`
-        }).join('');
-        ulList[1].innerHTML = todoList.done.map(todo => {
-          return `
-            <li>
-              <div class="todo">
-                  <input type="checkbox" id="${todo.id}" checked>
-                  <label>${todo.subject}</label>
-              </div>
-              <div class="controls">
-                  ${Dateformat.format(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
-                  | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
-              </div>
-            </li>`
-        }).join('');
+        ulList[0].innerHTML = todoList.ready.map(template.ready).join('');
+        ulList[1].innerHTML = todoList.done.map(template.done).join('');
         if (todoList.done.length) {
           ulList[1].parentNode.className = "box";
         }
