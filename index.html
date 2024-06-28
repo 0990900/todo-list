@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
     require(['func', 'option', 'pubsub', 'todolist'], function (f, Option, PubSub, TodoList) {
+      const elementOption = elId => f.compose(Option.of, document.byId)(elId);
       window.onloadafter(() => {
-        f.compose(Option.of, document.byId)('todo-input')
+        elementOption('todo-input')
           .tab(el => {
             el.addEventListener('keydown', e => {
               if (!e.isComposing && e.key === 'Enter') {
@@ -19,7 +20,7 @@
             });
           })
           .tab(el => el.focus());
-        f.compose(Option.of, document.byId)('todo-list')
+        elementOption('todo-list')
           .tab(el => {
             el.addEventListener('click', event => {
               if (event.target.type === 'checkbox') {

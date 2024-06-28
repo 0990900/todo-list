@@ -123,7 +123,7 @@ define('dateformat', [], function () {
   };
 });
 
-define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Option, PubSub, Dateformat) {
+define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Option, PubSub, Dateformat) {
   class Todo {
     constructor(subject) {
       this.id = crypto.randomUUID();
@@ -187,7 +187,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
   }
 
   const render = elementId => todoList => {
-    f.compose(Option.of, document.byId)(elementId)
+    F.compose(Option.of, document.byId)(elementId)
       .tab(el => el.innerHTML = template.empty())
       .tab(el => {
         const ulList = el.getElementsByTagName('ul');
