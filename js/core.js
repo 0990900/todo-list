@@ -25,7 +25,10 @@
   }
 
   const require = (dependencies, callback) => {
-    const resolve = dependency => {
+    if (typeof callback !== 'function') {
+      throw new Error('callback must be a function');
+    }
+    const resolve = (dependency, history) => {
       if (cache[dependency]) {
         return cache[dependency];
       }
@@ -33,16 +36,20 @@
       if (!module) {
         throw new Error(`Module ${dependency} has not been defined`);
       }
+      if (history.includes(dependency)) {
+       throw new Error(`Module ${dependency} has a circular dependencies`);
+      }
+      history.push(dependency);
       return suspend(() => {
         const resolver = trampoline(resolve);
-        const moduleInstance = module.factory.apply(global, module.dependencies.map(resolver));
+        const moduleInstance = module.factory.apply(global, module.dependencies.map(dep => resolver(dep, history)));
         cache[dependency] = moduleInstance;
         console.log(`dependency resolved - ${dependency}`);
         return moduleInstance;
       });
     }
     const resolver = trampoline(resolve);
-    callback.apply(global, dependencies.map(resolver));
+    callback.apply(global, dependencies.map(dep => resolver(dep, [])));
   }
   global.define = define;
   global.require = require;

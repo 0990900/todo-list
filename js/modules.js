@@ -112,17 +112,18 @@ define('dateformat', [], function () {
     'ss': ('0' + date.getSeconds()).slice(-2),
     'SSS': ('00' + date.getMilliseconds()).slice(-3)
   });
-  const formatter = (date, format) => {
+  const format = (date, format) => {
     if (!isDate(date)) {
       throw new Error('Can\'t format if it is not a Date object');
     }
     return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, matched => transform(date)[matched] || '');
   }
   return {
-    formatter};
+    format
+  };
 });
 
-define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Option, PubSub, dateformat) {
+define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Option, PubSub, Dateformat) {
   class Todo {
     constructor(subject) {
       this.id = crypto.randomUUID();
@@ -134,39 +135,42 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
 
   const render = elementId => todoList => {
     f.compose(Option.of, document.byId)(elementId)
-      .tab(el => el.innerHTML = `<div id="ready-list">
-        <ul></ul>
-      </div>
-      <div id="done-list">
-        <ul></ul>
-      </div>`)
+      .tab(el => el.innerHTML = `
+        <div id="ready-list">
+            <ul></ul>
+        </div>
+        <div id="done-list">
+            <ul></ul>
+        </div>`)
       .tab(el => {
         const ulList = el.getElementsByTagName('ul');
         ulList[0].innerHTML = todoList.ready.map(todo => {
-          return `<li>
-            <div class="todo">
-                <input type="checkbox" id="${todo.id}">
-                <label for="${todo.id}">${todo.subject}</label>
-            </div>
-            <div class="controls">
-                ${dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
-                | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
-            </div>
-          </li>`
+          return `
+            <li>
+              <div class="todo">
+                  <input type="checkbox" id="${todo.id}">
+                  <label for="${todo.id}">${todo.subject}</label>
+              </div>
+              <div class="controls">
+                  ${Dateformat.format(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
+                  | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+              </div>
+            </li>`
         }).join('');
         ulList[1].innerHTML = todoList.done.map(todo => {
-          return `<li>
-            <div class="todo">
-                <input type="checkbox" id="${todo.id}" checked>
-                <label>${todo.subject}</label>
-            </div>
-            <div class="controls">
-                ${dateformat.formatter(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
-                | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
-            </div>
-          </li>`
+          return `
+            <li>
+              <div class="todo">
+                  <input type="checkbox" id="${todo.id}" checked>
+                  <label>${todo.subject}</label>
+              </div>
+              <div class="controls">
+                  ${Dateformat.format(new Date(todo.createdAt), 'YYYY-MM-DD HH:mm:ss')}
+                  | <a href="javascript:void(0);" class="remove" for="${todo.id}" action="remove">삭제</a>
+              </div>
+            </li>`
         }).join('');
-        if (todoList.done.length > 0) {
+        if (todoList.done.length) {
           ulList[1].parentNode.className = "box";
         }
       });
@@ -180,8 +184,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (f, Opti
         if (!subjectTrimmed) {
           return;
         }
-        const exist = todolist.ready.some(item => item.subject === subjectTrimmed);
-        if (exist) {
+        if (todolist.ready.some(item => item.subject === subjectTrimmed)) {
           return;
         }
         todolist.ready.push(new Todo(subjectTrimmed));
