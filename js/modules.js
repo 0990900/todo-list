@@ -209,6 +209,9 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       });
     },
     toggle: onActionSuccess => (id, value) => {
+      if (typeof value !== 'boolean') {
+        return;
+      }
       modify(() => {
         if (value) {
           const idx = todolist.ready.findIndex(todo => todo.id === id);
