@@ -265,17 +265,6 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       if (!el || !template) {
         return;
       }
-      const readyTemplate = Todo.template(template.ready);
-      const doneTemplate = Todo.template(template.done);
-      const render = el => todoList => {
-        el.innerHTML = template.base.innerHTML;
-        const ulList = el.getElementsByTagName('ul');
-        ulList[0].innerHTML = todoList.ready.map(readyTemplate).join('');
-        ulList[1].innerHTML = todoList.done.map(doneTemplate).join('');
-        if (todoList.done.length) {
-          ulList[1].parentNode.className = 'box';
-        }
-      };
       const renderer = action.render(el, template);
       PubSub.subscribe('todo:append', action.append(onActionSuccess));
       PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
