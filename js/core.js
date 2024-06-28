@@ -50,6 +50,7 @@
     }
     const resolver = trampoline(resolve);
     callback.apply(global, dependencies.map(dep => resolver(dep, [])));
+    console.log('All dependencies have been resolved');
   }
   global.define = define;
   global.require = require;
