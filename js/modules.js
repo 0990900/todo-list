@@ -261,10 +261,6 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
       PubSub.subscribe('todo:remove', remove);
       PubSub.subscribe('todo:render', renderer);
       renderer(todolist);
-      return {
-        print: () => todolist.ready.forEach(console.log)
-      };
-    },
-    render
+    }
   }
 });
