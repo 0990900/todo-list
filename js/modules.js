@@ -186,8 +186,8 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
       </li>`
   }
 
-  const render = elementId => todoList => {
-    F.compose(Option.of, document.byId)(elementId)
+  const render = elOpt => todoList => {
+    elOpt
       .tab(el => el.innerHTML = template.empty())
       .tab(el => {
         const ulList = el.getElementsByTagName('ul');
@@ -200,7 +200,10 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
   };
 
   return {
-    of: (elList, focus) => {
+    of: (elOpt = Option.None(), onActionSuccess = () => {}) => {
+      if (elOpt.isNone) {
+        return;
+      }
       const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
       const append = subject => {
         modify(todolist, () => {
@@ -236,6 +239,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
             todolist.done.splice(idx, 1);
             todolist.ready.push(todo);
           }
+          onActionSuccess();
         });
       };
       const remove = id => {
@@ -248,10 +252,10 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
           return true;
         }
         modify(todolist, () => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
-          onSuccess: result => result ? focus() : alert(`Todolist(${id}) not found`)
+          onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
         });
       }
-      const renderer = render(elList);
+      const renderer = render(elOpt);
       PubSub.subscribe('todo:append', append);
       PubSub.subscribe('todo:toggle', toggle);
       PubSub.subscribe('todo:remove', remove);

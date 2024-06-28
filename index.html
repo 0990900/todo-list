@@ -10,29 +10,28 @@
     require(['func', 'option', 'pubsub', 'todolist'], function (f, Option, PubSub, TodoList) {
       const elementOption = elId => f.compose(Option.of, document.byId)(elId);
       window.onloadafter(() => {
-        elementOption('todo-input')
-          .tab(el => {
-            el.addEventListener('keydown', e => {
-              if (!e.isComposing && e.key === 'Enter') {
-                PubSub.publish('todo:append', el.value);
-                el.value = "";
-              }
-            });
-          })
-          .tab(el => el.focus());
-        elementOption('todo-list')
-          .tab(el => {
-            el.addEventListener('click', event => {
-              if (event.target.type === 'checkbox') {
-                PubSub.publish('todo:toggle', event.target.id, event.target.checked);
-              } else if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
-                PubSub.publish('todo:remove', event.target.getAttribute("for"));
-              }
-            });
+        const $input = elementOption('todo-input');
+        const $todolist = elementOption('todo-list');
+        TodoList.of($todolist, () => $input.tab(el => el.focus()));
+
+        // handle event
+        $input.tab(el => {
+          el.addEventListener('keydown', e => {
+            if (!e.isComposing && e.key === 'Enter') {
+              PubSub.publish('todo:append', el.value);
+              el.value = "";
+            }
           });
-        TodoList.of('todo-list', () => {
-          f.compose(Option.of, document.byId)('todo-input')
-            .tab(el => el.focus());
+        }).tab(el => el.focus());
+
+        $todolist.tab(el => {
+          el.addEventListener('click', event => {
+            if (event.target.type === 'checkbox') {
+              PubSub.publish('todo:toggle', event.target.id, event.target.checked);
+            } else if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
+              PubSub.publish('todo:remove', event.target.getAttribute("for"));
+            }
+          });
         });
       });
     });
