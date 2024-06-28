@@ -166,6 +166,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       subject: todo.subject,
       createdAt: Dateformat.format(new Date(todo.createdAt))
     });
+    static sorter = (a, b) => b.createdAt - a.createdAt;
   }
 
   const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
@@ -202,7 +203,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         return;
       }
       todolist.ready.push(new Todo(subjectTrimmed));
-      todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
+      todolist.ready.sort(Todo.sorter);
     });
   }
 
@@ -217,7 +218,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         todo.done = value;
         todolist.ready.splice(idx, 1);
         todolist.done.push(todo);
-        todolist.done.sort((a, b) => b.createdAt - a.createdAt);
+        todolist.done.sort(Todo.sorter);
       } else {
         const idx = todolist.done.findIndex(todo => todo.id === id);
         if (idx < 0) {
@@ -227,7 +228,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         todo.done = value;
         todolist.done.splice(idx, 1);
         todolist.ready.push(todo);
-        todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
+        todolist.ready.sort(Todo.sorter);
       }
       onActionSuccess();
     });
