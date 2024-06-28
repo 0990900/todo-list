@@ -47,3 +47,7 @@ div.box {
 #done-list label {
   text-decoration: line-through;
 }
+
+.link-like {
+  cursor: pointer;
+}

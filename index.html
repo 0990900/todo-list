@@ -7,33 +7,33 @@
   <script type="text/javascript" src="js/modules.js"></script>
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
-    require(['func', 'option', 'pubsub', 'todolist'], function (f, Option, PubSub, TodoList) {
-      const elementOption = elId => f.compose(Option.of, document.byId)(elId);
+    require(['func', 'option', 'pubsub', 'todolist'], function (F, Option, PubSub, TodoList) {
+      const elementOf = id => F.compose(Option.of, document.byId)(id);
       window.onloadafter(() => {
-        const $input = elementOption('todo-input');
-        const $todolist = elementOption('todo-list');
-        TodoList.of($todolist, () => $input.tab(el => el.focus()));
-
-        // handle event
-        $input.tab(el => {
-          el.addEventListener('keydown', e => {
-            if (!e.isComposing && e.key === 'Enter') {
-              PubSub.publish('todo:append', el.value);
-              el.value = "";
-            }
-          });
-        }).tab(el => el.focus());
-
-        $todolist.tab(el => {
-          el.addEventListener('click', event => {
-            if (event.target.type === 'checkbox') {
-              PubSub.publish('todo:toggle', event.target.id, event.target.checked);
-            } else if (event.target.tagName === "A" && event.target.dataset['action'] === "remove") {
-              event.preventDefault();
-              PubSub.publish('todo:remove', event.target.dataset['id']);
-            }
-          });
-        });
+        elementOf('todo-list')
+          .zip(
+            elementOf('todo-input'),
+            elementOf('template-todo-base'),
+            elementOf('template-todo-ready'),
+            elementOf('template-todo-done'),
+            (todolist, input, base, ready, done) => {
+              TodoList.of(todolist, {base, ready, done}, () => input.focus());
+              input.addEventListener('keydown', e => {
+                if (!e.isComposing && e.key === 'Enter') {
+                  PubSub.publish('todo:append', input.value);
+                  input.value = "";
+                }
+              }, false);
+              todolist.addEventListener('click', event => {
+                if (event.target.type === 'checkbox') {
+                  PubSub.publish('todo:toggle', event.target.dataset['id'], event.target.checked);
+                } else if (event.target.tagName === "A" && event.target.dataset['action'] === "remove") {
+                  event.preventDefault();
+                  PubSub.publish('todo:remove', event.target.dataset['id']);
+                }
+              });
+              input.focus();
+            }, false);
       });
     });
   </script>
@@ -45,4 +45,41 @@
 </div>
 <div id="todo-list"></div>
 </body>
+<!-- Templates -->
+<script type="text/html" id="template-todo-base">
+  <div id="ready-list">
+    <ul></ul>
+  </div>
+  <div id="done-list">
+    <ul></ul>
+  </div>
+</script>
+<script type="text/html" id="template-todo-ready">
+  <li>
+    <div class="todo">
+      <label>
+        <input type="checkbox" class="link-like" data-id="{{id}}">
+        {{subject}}
+      </label>
+    </div>
+    <div class="controls">
+      {{createdAt}}
+      | <a class="remove link-like" data-id="{{id}}" data-action="remove">삭제</a>
+    </div>
+  </li>
+</script>
+<script type="text/html" id="template-todo-done">
+  <li>
+    <div class="todo">
+      <label>
+        <input type="checkbox" class="link-like" data-id="{{id}}" checked>
+        {{subject}}
+      </label>
+    </div>
+    <div class="controls">
+      {{createdAt}}
+      | <a class="remove link-like" data-id="{{id}}" data-action="remove">삭제</a>
+    </div>
+  </li>
+</script>
 </html>

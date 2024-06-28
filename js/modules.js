@@ -1,12 +1,13 @@
 define('func', [], function () {
   const compose = (...fs) => x => fs.reverse().reduce((acc, f) => f(acc), x);
   const identity = x => x;
+  const empty = _ => {};
   return {
-    compose, identity
+    compose, identity, empty
   };
 });
 
-define('option', ['func'], function (func) {
+define('option', ['func'], function (F) {
   const isFunc = (...fs) => fs.reduce((acc, f) => typeof f === 'function', true)
   const Some = value => ({
     map: f => isFunc(f) ? handleError(() => f(value), option.of, None) : None(),
@@ -31,6 +32,12 @@ define('option', ['func'], function (func) {
       }
       return Some(value);
     },
+    zip: (...args) => {
+      const f = args.splice(-1);
+      return f.length && isFunc(f[0])
+        ? handleError(() => f[0].apply(null, [value].concat(args.map(arg => arg.getOrThrow()))), F.identity, None)
+        : None();
+    },
     isSome: true,
     isNone: false
   });
@@ -38,10 +45,11 @@ define('option', ['func'], function (func) {
   const None = () => ({
     map: _ => None(),
     flatMap: _ => None(),
-    getOrElse: func.identity,
+    getOrElse: F.identity,
     getOrThrow: _ => {
       throw new Error('Can\'t get value from none');
     },
+    zip: _ => None(),
     tab: _ => None(),
     isSome: false,
     isNone: true
@@ -112,7 +120,7 @@ define('dateformat', [], function () {
     'ss': ('0' + date.getSeconds()).slice(-2),
     'SSS': ('00' + date.getMilliseconds()).slice(-3)
   });
-  const format = (date, format ='YYYY-MM-DD HH:mm:ss') => {
+  const format = (date, format = 'YYYY-MM-DD HH:mm:ss') => {
     if (!isDate(date)) {
       throw new Error('Can\'t format if it is not a Date object');
     }
@@ -123,7 +131,29 @@ define('dateformat', [], function () {
   };
 });
 
-define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Option, PubSub, Dateformat) {
+define('template', [], function () {
+  const execute = (message, data) => message.replace(/\{\{([^}]+)}}/g, match => {
+    match = match.slice(2, -2); // 괄호를 벗긴다.
+    const sub = match.split('.');
+    if (sub.length > 1) {
+      let temp = data;
+      sub.forEach(item => {
+        if (!temp[data]) {
+          temp = '{{' + match + '}}'; // fallback when it does not exsits
+          return;
+        }
+        temp = temp[item];
+      });
+      return temp;
+    } else {
+      if (!data[match]) return '{{' + match + '}}';
+      return data[match];
+    }
+  });
+  return {execute};
+});
+
+define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], function (F, Option, PubSub, Dateformat, Template) {
   class Todo {
     constructor(subject) {
       this.id = crypto.randomUUID();
@@ -131,7 +161,14 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
       this.subject = subject;
       this.createdAt = new Date().getTime();
     }
+    static template = (raw) => todo => Template.execute(raw.innerHTML, {
+      id: todo.id,
+      subject: todo.subject,
+      createdAt: Dateformat.format(new Date(todo.createdAt))
+    });
   }
+
+  const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
 
   /**
    * 수정이 정상적으로 완료되면 자동으로 로컬 스토리지에 저장 후 렌더링 한다.
@@ -154,112 +191,83 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
     }
   }
 
-  const template = {
-    empty: () => `
-      <div id="ready-list">
-          <ul></ul>
-      </div>
-      <div id="done-list">
-          <ul></ul>
-      </div>`,
-    ready: todo => `
-      <li>
-        <div class="todo">
-            <input type="checkbox" id="${todo.id}">
-            <label for="${todo.id}">${todo.subject}</label>
-        </div>
-        <div class="controls">
-            ${Dateformat.format(new Date(todo.createdAt))}
-            | <a class="remove" data-id="${todo.id}" data-action="remove">삭제</a>
-        </div>
-      </li>`,
-    done: todo => `
-      <li>
-        <div class="todo">
-            <input type="checkbox" id="${todo.id}" checked>
-            <label>${todo.subject}</label>
-        </div>
-        <div class="controls">
-            ${Dateformat.format(new Date(todo.createdAt))}
-            | <a class="remove" data-id="${todo.id}" data-action="remove">삭제</a>
-        </div>
-      </li>`
+  const append = subject => {
+    modify(todolist, () => {
+      const subjectTrimmed = subject.trim();
+      if (!subjectTrimmed) {
+        return;
+      }
+      if (todolist.ready.some(item => item.subject === subjectTrimmed)
+        || todolist.done.some(item => item.subject === subjectTrimmed)) {
+        return;
+      }
+      todolist.ready.push(new Todo(subjectTrimmed));
+      todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
+      console.log(todolist);
+    });
   }
 
-  const render = elOpt => todoList => {
-    elOpt
-      .tab(el => el.innerHTML = template.empty())
-      .tab(el => {
+  const toggle = onActionSuccess => (id, value) => {
+    modify(todolist, () => {
+      if (value) {
+        const idx = todolist.ready.findIndex(todo => todo.id === id);
+        if (idx < 0) {
+          return;
+        }
+        const todo = todolist.ready[idx];
+        todo.done = value;
+        todolist.ready.splice(idx, 1);
+        todolist.done.push(todo);
+        todolist.done.sort((a, b) => b.createdAt - a.createdAt);
+      } else {
+        const idx = todolist.done.findIndex(todo => todo.id === id);
+        if (idx < 0) {
+          return;
+        }
+        const todo = todolist.done[idx];
+        todo.done = value;
+        todolist.done.splice(idx, 1);
+        todolist.ready.push(todo);
+        todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
+      }
+      onActionSuccess();
+    });
+  };
+
+  const remove = onActionSuccess => id => {
+    const removeInner = (array, id) => {
+      const idx = array.findIndex(todo => todo.id === id);
+      if (idx < 0) {
+        return false;
+      }
+      array.splice(idx, 1);
+      return true;
+    }
+    modify(todolist, () => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
+      onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
+    });
+  }
+
+  return {
+    of: (el, template, onActionSuccess = F.empty) => {
+      if (!el || !template) {
+        return;
+      }
+      const readyTemplate = Todo.template(template.ready);
+      const doneTemplate = Todo.template(template.done);
+      const render = el => todoList => {
+        el.innerHTML = template.base.innerHTML;
         const ulList = el.getElementsByTagName('ul');
-        ulList[0].innerHTML = todoList.ready.map(template.ready).join('');
-        ulList[1].innerHTML = todoList.done.map(template.done).join('');
+        ulList[0].innerHTML = todoList.ready.map(readyTemplate).join('');
+        ulList[1].innerHTML = todoList.done.map(doneTemplate).join('');
         if (todoList.done.length) {
           ulList[1].parentNode.className = "box";
         }
-      });
-  };
-
-  return {
-    of: (elOpt = Option.None(), onActionSuccess = () => {}) => {
-      if (elOpt.isNone) {
-        return;
-      }
-      const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
-      const append = subject => {
-        modify(todolist, () => {
-          const subjectTrimmed = subject.trim();
-          if (!subjectTrimmed) {
-            return;
-          }
-          if (todolist.ready.some(item => item.subject === subjectTrimmed)
-            || todolist.done.some(item => item.subject === subjectTrimmed)) {
-            return;
-          }
-          todolist.ready.push(new Todo(subjectTrimmed));
-          todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
-        });
-      }
-      const toggle = (id, value) => {
-        modify(todolist, () => {
-          if (value) {
-            const idx = todolist.ready.findIndex(todo => todo.id === id);
-            if (idx < 0) {
-              return;
-            }
-            const todo = todolist.ready[idx];
-            todo.done = value;
-            todolist.ready.splice(idx, 1);
-            todolist.done.push(todo);
-          } else {
-            const idx = todolist.done.findIndex(todo => todo.id === id);
-            if (idx < 0) {
-              return;
-            }
-            const todo = todolist.done[idx];
-            todo.done = value;
-            todolist.done.splice(idx, 1);
-            todolist.ready.push(todo);
-          }
-          onActionSuccess();
-        });
       };
-      const remove = id => {
-        const removeInner = (array, id) => {
-          const idx = array.findIndex(todo => todo.id === id);
-          if (idx < 0) {
-            return false;
-          }
-          array.splice(idx, 1);
-          return true;
-        }
-        modify(todolist, () => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
-          onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
-        });
-      }
-      const renderer = render(elOpt);
+      const renderer = render(el);
       PubSub.subscribe('todo:append', append);
-      PubSub.subscribe('todo:toggle', toggle);
-      PubSub.subscribe('todo:remove', remove);
+      PubSub.subscribe('todo:toggle', toggle(onActionSuccess));
+      PubSub.subscribe('todo:remove', remove(onActionSuccess));
       PubSub.subscribe('todo:render', renderer);
       renderer(todolist);
     }

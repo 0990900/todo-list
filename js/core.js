@@ -11,6 +11,9 @@
     return result;
   }
 
+  /**
+   * The factory result should return an object, not a function.
+   */
   const define = (name, dependencies, factory) => {
     if (typeof name !== 'string') {
       throw new Error('Module name must be a string type');
@@ -37,7 +40,7 @@
         throw new Error(`Module ${dependency} has not been defined`);
       }
       if (history.includes(dependency)) {
-       throw new Error(`Module ${dependency} has a circular dependencies`);
+        throw new Error(`Module ${dependency} has a circular dependencies`);
       }
       history.push(dependency);
       return suspend(() => {
