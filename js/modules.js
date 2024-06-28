@@ -181,7 +181,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     try {
       const result = execute();
       localStorage.setItem('todolist', JSON.stringify(todolist));
-      PubSub.publish('todo:render', todolist);
+      PubSub.publish('todo:render');
       typeof onSuccess === 'function' && onSuccess(result);
     } catch (e) {
       if (typeof onFailure === 'function') {
@@ -192,62 +192,73 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     }
   }
 
-  const append = onActionSuccess => subject => {
-    modify(() => {
-      const subjectTrimmed = subject.trim();
-      if (!subjectTrimmed) {
-        return;
-      }
-      if (todolist.ready.some(item => item.subject === subjectTrimmed)
-        || todolist.done.some(item => item.subject === subjectTrimmed)) {
-        return;
-      }
-      todolist.ready.push(new Todo(subjectTrimmed));
-      todolist.ready.sort(Todo.sorter);
-      onActionSuccess();
-    });
-  }
-
-  const toggle = onActionSuccess => (id, value) => {
-    modify(() => {
-      if (value) {
-        const idx = todolist.ready.findIndex(todo => todo.id === id);
-        if (idx < 0) {
+  const action = {
+    append: onActionSuccess => subject => {
+      modify(() => {
+        const subjectTrimmed = subject.trim();
+        if (!subjectTrimmed) {
           return;
         }
-        const todo = todolist.ready[idx];
-        todo.done = value;
-        todolist.ready.splice(idx, 1);
-        todolist.done.push(todo);
-        todolist.done.sort(Todo.sorter);
-      } else {
-        const idx = todolist.done.findIndex(todo => todo.id === id);
-        if (idx < 0) {
+        if (todolist.ready.some(item => item.subject === subjectTrimmed)
+          || todolist.done.some(item => item.subject === subjectTrimmed)) {
           return;
         }
-        const todo = todolist.done[idx];
-        todo.done = value;
-        todolist.done.splice(idx, 1);
-        todolist.ready.push(todo);
+        todolist.ready.push(new Todo(subjectTrimmed));
         todolist.ready.sort(Todo.sorter);
+        onActionSuccess();
+      });
+    },
+    toggle: onActionSuccess => (id, value) => {
+      modify(() => {
+        if (value) {
+          const idx = todolist.ready.findIndex(todo => todo.id === id);
+          if (idx < 0) {
+            return;
+          }
+          const todo = todolist.ready[idx];
+          todo.done = value;
+          todolist.ready.splice(idx, 1);
+          todolist.done.push(todo);
+          todolist.done.sort(Todo.sorter);
+        } else {
+          const idx = todolist.done.findIndex(todo => todo.id === id);
+          if (idx < 0) {
+            return;
+          }
+          const todo = todolist.done[idx];
+          todo.done = value;
+          todolist.done.splice(idx, 1);
+          todolist.ready.push(todo);
+          todolist.ready.sort(Todo.sorter);
+        }
+        onActionSuccess();
+      });
+    },
+    remove: onActionSuccess => id => {
+      const removeInner = (array, id) => {
+        const idx = array.findIndex(todo => todo.id === id);
+        if (idx < 0) {
+          return false;
+        }
+        array.splice(idx, 1);
+        return true;
       }
-      onActionSuccess();
-    });
-  };
-
-  const remove = onActionSuccess => id => {
-    const removeInner = (array, id) => {
-      const idx = array.findIndex(todo => todo.id === id);
-      if (idx < 0) {
-        return false;
+      modify(() => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
+        onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
+      });
+    },
+    render: (el, template) => () => {
+      const readyTemplate = Todo.template(template.ready);
+      const doneTemplate = Todo.template(template.done);
+      el.innerHTML = template.base.innerHTML;
+      const ulList = el.getElementsByTagName('ul');
+      ulList[0].innerHTML = todolist.ready.map(readyTemplate).join('');
+      ulList[1].innerHTML = todolist.done.map(doneTemplate).join('');
+      if (todolist.done.length) {
+        ulList[1].parentNode.className = 'box';
       }
-      array.splice(idx, 1);
-      return true;
     }
-    modify(() => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
-      onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
-    });
-  }
+  };
 
   return {
     of: (el, template, onActionSuccess = F.empty) => {
@@ -265,12 +276,12 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
           ulList[1].parentNode.className = 'box';
         }
       };
-      const renderer = render(el);
-      PubSub.subscribe('todo:append', append(onActionSuccess));
-      PubSub.subscribe('todo:toggle', toggle(onActionSuccess));
-      PubSub.subscribe('todo:remove', remove(onActionSuccess));
+      const renderer = action.render(el, template);
+      PubSub.subscribe('todo:append', action.append(onActionSuccess));
+      PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
+      PubSub.subscribe('todo:remove', action.remove(onActionSuccess));
       PubSub.subscribe('todo:render', renderer);
-      renderer(todolist);
+      renderer();
     }
   }
 });
