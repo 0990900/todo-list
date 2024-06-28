@@ -211,7 +211,8 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
           if (!subjectTrimmed) {
             return;
           }
-          if (todolist.ready.some(item => item.subject === subjectTrimmed)) {
+          if (todolist.ready.some(item => item.subject === subjectTrimmed)
+            || todolist.done.some(item => item.subject === subjectTrimmed)) {
             return;
           }
           todolist.ready.push(new Todo(subjectTrimmed));
