@@ -23,7 +23,7 @@
                   PubSub.publish('todo:append', input.value);
                   input.value = "";
                 }
-              }, false);
+              });
               todolist.addEventListener('click', event => {
                 if (event.target.type === 'checkbox') {
                   PubSub.publish('todo:toggle', event.target.dataset['id'], event.target.checked);
@@ -33,7 +33,7 @@
                 }
               });
               input.focus();
-            }, false);
+            });
       });
     });
   </script>

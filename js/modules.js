@@ -203,7 +203,6 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       }
       todolist.ready.push(new Todo(subjectTrimmed));
       todolist.ready.sort((a, b) => b.createdAt - a.createdAt);
-      console.log(todolist);
     });
   }
 
