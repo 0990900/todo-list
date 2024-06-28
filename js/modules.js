@@ -194,10 +194,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
 
   const action = {
     append: onActionSuccess => subject => {
-      if (typeof subject !== 'string') {
-        return;
-      }
-      modify(() => {
+      typeof subject === 'string' && modify(() => {
         const subjectTrimmed = subject.trim();
         if (!subjectTrimmed) {
           return;
@@ -212,10 +209,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       });
     },
     toggle: onActionSuccess => (id, value) => {
-      if (typeof value !== 'boolean') {
-        return;
-      }
-      modify(() => {
+      typeof value === 'boolean' && modify(() => {
         if (value) {
           const idx = todolist.ready.findIndex(todo => todo.id === id);
           if (idx < 0) {
