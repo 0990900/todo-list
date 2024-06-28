@@ -260,7 +260,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         ulList[0].innerHTML = todoList.ready.map(readyTemplate).join('');
         ulList[1].innerHTML = todoList.done.map(doneTemplate).join('');
         if (todoList.done.length) {
-          ulList[1].parentNode.className = "box";
+          ulList[1].parentNode.className = 'box';
         }
       };
       const renderer = render(el);
