@@ -17,7 +17,7 @@
             elementOf('template-todo-ready'),
             elementOf('template-todo-done'),
             (todolist, input, base, ready, done) => {
-              TodoList.of(todolist, {base, ready, done}, () => input.focus());
+              TodoList.of(todolist, /* template */ {base, ready, done}, /* onSuccess */ () => input.focus());
               input.addEventListener('keydown', e => {
                 if (!e.isComposing && e.key === 'Enter') {
                   PubSub.publish('todo:append', input.value);
