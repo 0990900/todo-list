@@ -24,8 +24,7 @@
             el.addEventListener('click', event => {
               if (event.target.type === 'checkbox') {
                 PubSub.publish('todo:toggle', event.target.id, event.target.checked);
-              }
-              if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
+              } else if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
                 PubSub.publish('todo:remove', event.target.getAttribute("for"));
               }
             });
