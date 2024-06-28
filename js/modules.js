@@ -170,7 +170,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
         </div>
         <div class="controls">
             ${Dateformat.format(new Date(todo.createdAt))}
-            | <a class="remove" for="${todo.id}" action="remove">삭제</a>
+            | <a class="remove" data-id="${todo.id}" data-action="remove">삭제</a>
         </div>
       </li>`,
     done: todo => `
@@ -181,7 +181,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat'], function (F, Opti
         </div>
         <div class="controls">
             ${Dateformat.format(new Date(todo.createdAt))}
-            | <a class="remove" for="${todo.id}" action="remove">삭제</a>
+            | <a class="remove" data-id="${todo.id}" data-action="remove">삭제</a>
         </div>
       </li>`
   }

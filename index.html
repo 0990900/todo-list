@@ -29,8 +29,8 @@
             event.preventDefault();
             if (event.target.type === 'checkbox') {
               PubSub.publish('todo:toggle', event.target.id, event.target.checked);
-            } else if (event.target.tagName === "A" && event.target.getAttribute("action") === "remove") {
-              PubSub.publish('todo:remove', event.target.getAttribute("for"));
+            } else if (event.target.tagName === "A" && event.target.dataset['action'] === "remove") {
+              PubSub.publish('todo:remove', event.target.dataset['id']);
             }
           });
         });
