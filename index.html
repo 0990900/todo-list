@@ -21,7 +21,7 @@
               input.addEventListener('keydown', e => {
                 if (!e.isComposing && e.key === 'Enter') {
                   PubSub.publish('todo:append', input.value);
-                  input.value = "";
+                  input.value = '';
                 }
               });
               input.focus();
