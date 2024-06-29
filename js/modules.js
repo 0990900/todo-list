@@ -260,6 +260,14 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
 
   return {
     of: (el, template, onActionSuccess = F.empty) => {
+      el.addEventListener('click', event => {
+        if (event.target.type === 'checkbox') {
+          PubSub.publish('todo:toggle', event.target.dataset['id'], event.target.checked);
+        } else if (event.target.tagName === "A" && event.target.dataset['action'] === "remove") {
+          event.preventDefault();
+          PubSub.publish('todo:remove', event.target.dataset['id']);
+        }
+      });
       PubSub.subscribe('todo:append', action.append(onActionSuccess));
       PubSub.subscribe('todo:toggle', action.toggle(onActionSuccess));
       PubSub.subscribe('todo:remove', action.remove(onActionSuccess));
