@@ -2,17 +2,17 @@ define('func', [], function () {
   const compose = (...fs) => x => fs.reverse().reduce((acc, f) => f(acc), x);
   const identity = x => x;
   const empty = _ => {};
+  const isFunc = (...fs) => fs.reduce((acc, f) => typeof f === 'function', true);
   return {
-    compose, identity, empty
+    compose, identity, empty, isFunc
   };
 });
 
 define('option', ['func'], function (F) {
-  const isFunc = (...fs) => fs.reduce((acc, f) => typeof f === 'function', true)
   const Some = value => ({
-    map: f => isFunc(f) ? handleError(() => f(value), option.of, None) : None(),
+    map: f => F.isFunc(f) ? handleError(() => f(value), option.of, None) : None(),
     flatMap: f => handleError(
-      () => isFunc(f) ? f(value) : None(),
+      () => F.isFunc(f) ? f(value) : None(),
       result => {
         if (isOption(result)) {
           return result;
@@ -26,7 +26,7 @@ define('option', ['func'], function (F) {
     getOrThrow: _ => value,
     tab: f => {
       try {
-        isFunc(f) && f(value);
+        F.isFunc(f) && f(value);
       } catch (e) {
         console.log(e);
       }
@@ -34,7 +34,7 @@ define('option', ['func'], function (F) {
     },
     zip: (...args) => {
       const f = args.splice(-1);
-      return f.length && isFunc(f[0])
+      return f.length && F.isFunc(f[0])
         ? handleError(() => f[0].apply(null, [value].concat(args.map(arg => arg.getOrThrow()))), F.identity, None)
         : None();
     },
@@ -56,7 +56,7 @@ define('option', ['func'], function (F) {
   });
 
   const handleError = (f, onSuccess, onFailure) => {
-    if (isFunc(f, onSuccess, onFailure)) {
+    if (F.isFunc(f, onSuccess, onFailure)) {
       try {
         return onSuccess(f());
       } catch (e) {
@@ -111,6 +111,7 @@ define('pubsub', [], function () {
 
 define('dateformat', [], function () {
   const isDate = date => date instanceof Date && !isNaN(date.getTime());
+  const isTime = time => typeof time === 'number' && !isNaN(time);
   const transform = date => ({
     'YYYY': date.getFullYear(),
     'MM': ('0' + (date.getMonth() + 1)).slice(-2),
@@ -120,11 +121,19 @@ define('dateformat', [], function () {
     'ss': ('0' + date.getSeconds()).slice(-2),
     'SSS': ('00' + date.getMilliseconds()).slice(-3)
   });
-  const format = (date, format = 'YYYY-MM-DD HH:mm:ss') => {
-    if (!isDate(date)) {
-      throw new Error('Can\'t format if it is not a Date object');
+  /**
+   * convert date obj (or time value) to formated date-string.
+   * @param dateOrTime time or date object
+   * @param format  default value is 'YYYY-MM-DD HH:mm:ss'
+   * @returns {string}  formated date-string
+   */
+  const format = (dateOrTime, format = 'YYYY-MM-DD HH:mm:ss') => {
+    if (isTime(dateOrTime)) {
+      dateOrTime = new Date(dateOrTime);
+    } else if (!isDate(dateOrTime)) {
+      throw new Error('Can\'t format if it is not a Date object or time');
     }
-    return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, matched => transform(date)[matched] || '');
+    return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, matched => transform(dateOrTime)[matched] || '');
   }
   return {
     format
@@ -164,7 +173,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     static template = (raw) => todo => Template.execute(raw.innerHTML, {
       id: todo.id,
       subject: todo.subject,
-      createdAt: Dateformat.format(new Date(todo.createdAt))
+      createdAt: Dateformat.format(todo.createdAt)
     });
     static sorter = (a, b) => b.createdAt - a.createdAt;
   }
