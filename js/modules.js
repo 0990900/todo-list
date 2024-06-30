@@ -254,10 +254,10 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     },
     render: (el, template) => () => {
       if (el && template) {
-        const readyTemplate = Todo.template(template.ready);
-        const doneTemplate = Todo.template(template.done);
         el.innerHTML = template.base.innerHTML;
         const ulList = el.getElementsByTagName('ul');
+        const readyTemplate = Todo.template(template.ready);
+        const doneTemplate = Todo.template(template.done);
         ulList[0].innerHTML = todolist.ready.map(readyTemplate).join('');
         ulList[1].innerHTML = todolist.done.map(doneTemplate).join('');
         if (todolist.done.length) {
