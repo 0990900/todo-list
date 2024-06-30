@@ -2,17 +2,6 @@
   const modules = {};
   const cache = {};
 
-  const suspend = (func, ...args) => function $_r_suspend () {
-    return func(...args);
-  }
-  const trampoline = func => (...args) => {
-    let result = func(...args);
-    while (typeof result === 'function' && result.name === '$_r_suspend') {
-      result = result();
-    }
-    return result;
-  }
-
   const define = (name, dependencies, factory) => {
     if (typeof name !== 'string') {
       throw new Error('Module name must be a string type');
@@ -42,16 +31,12 @@
         throw new Error(`Module ${dependency} has a circular dependencies`);
       }
       history.push(dependency);
-      return suspend(() => {
-        const resolver = trampoline(resolve);
-        const moduleInstance = module.factory.apply(global, module.dependencies.map(dep => resolver(dep, history)));
-        cache[dependency] = moduleInstance;
-        console.log(`dependency resolved - ${dependency}`);
-        return moduleInstance;
-      });
+      const moduleInstance = module.factory.apply(global, module.dependencies.map(dep => resolve(dep, history)));
+      cache[dependency] = moduleInstance;
+      console.log(`dependency resolved - ${dependency}`);
+      return moduleInstance;
     }
-    const resolver = trampoline(resolve);
-    callback.apply(global, dependencies.map(dep => resolver(dep, [])));
+    callback.apply(global, dependencies.map(dep => resolve(dep, [])));
     console.log('All dependencies have been resolved');
   }
   global.define = define;
