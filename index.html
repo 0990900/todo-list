@@ -18,9 +18,15 @@
             elementOf('template-todo-done'),
             (input, todolist, base, ready, done) => {
               input.disabled = true;
-              TodoList.of(todolist, /* template */ {base, ready, done}, /* onActionSuccess */ () => input.focus());
+              TodoList.of(todolist,
+                {base, ready, done}, // template
+                () => { // onActionSuccess
+                  input.disabled = false;
+                  input.focus()
+                });
               input.addEventListener('keydown', e => {
                 if (!e.isComposing && e.key === 'Enter') {
+                  input.disabled = true;
                   PubSub.publish('todo:append', input.value);
                   input.value = '';
                 }
