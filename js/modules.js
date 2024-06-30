@@ -170,7 +170,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       this.subject = subject;
       this.createdAt = new Date().getTime();
     }
-    static template = (raw) => todo => Template.execute(raw.innerHTML, {
+    static template = tag => todo => Template.execute(tag.innerHTML, {
       id: todo.id,
       subject: todo.subject,
       createdAt: Dateformat.format(todo.createdAt)
