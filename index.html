@@ -10,13 +10,14 @@
     require(['func', 'option', 'pubsub', 'todolist'], function (F, Option, PubSub, TodoList) {
       const elementOf = id => F.compose(Option.of, document.byId)(id);
       window.onloadafter(() => {
-        elementOf('todo-list')
+        elementOf('todo-input')
           .zip(
-            elementOf('todo-input'),
+            elementOf('todo-list'),
             elementOf('template-todo-base'),
             elementOf('template-todo-ready'),
             elementOf('template-todo-done'),
-            (todolist, input, base, ready, done) => {
+            (input, todolist, base, ready, done) => {
+              input.disabled = true;
               TodoList.of(todolist, /* template */ {base, ready, done}, /* onActionSuccess */ () => input.focus());
               input.addEventListener('keydown', e => {
                 if (!e.isComposing && e.key === 'Enter') {
@@ -24,6 +25,7 @@
                   input.value = '';
                 }
               });
+              input.disabled = false;
               input.focus();
             });
       });
