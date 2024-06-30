@@ -2,18 +2,17 @@
   const modules = {};
   const cache = {};
 
-  const suspend = (func, ...args) => () => func(...args)
+  const suspend = (func, ...args) => function $_r_suspend () {
+    return func(...args);
+  }
   const trampoline = func => (...args) => {
     let result = func(...args);
-    while (typeof result === 'function') {
+    while (typeof result === 'function' && result.name === '$_r_suspend') {
       result = result();
     }
     return result;
   }
 
-  /**
-   * The factory result should return an object, not a function.
-   */
   const define = (name, dependencies, factory) => {
     if (typeof name !== 'string') {
       throw new Error('Module name must be a string type');
