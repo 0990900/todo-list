@@ -18,7 +18,8 @@
             elementOf('template-todo-done'),
             (input, todolist, base, ready, done) => {
               input.disabled = true;
-              TodoList.of(todolist,
+              TodoList.of(
+                todolist,
                 {base, ready, done}, // template
                 () => { // onActionSuccess
                   input.disabled = false;
