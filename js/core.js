@@ -59,20 +59,28 @@
     $script.addEventListener('error', listener, false);
   });
 
-  const loadModules = (scriptUrls, callback) => {
-    if (loaded) {
-      throw new Error('Module loading is possible only once');
+  const loadModules = (() => {
+    let called = false;
+    return (scriptUrls, callback) => {
+      if (called) {
+        console.warn(`Module has already been loaded`);
+        return;
+      }
+      if (loaded) {
+        throw new Error('Module loading is possible only once');
+      }
+      loadRemoteModules = true;
+      called = true;
+      Promise
+        .all(scriptUrls.map(loadRemoteScript))
+        .then((...args) => {
+          callback && callback.apply(null, args);
+          loaded = true;
+          callbacks.forEach(f => f());
+          console.log('All dependencies have been resolved after other modules');
+        });
     }
-    loadRemoteModules = true;
-    Promise
-      .all(scriptUrls.map(url => loadRemoteScript(url)))
-      .then((...args) => {
-        callback && callback.apply(null, args);
-        loaded = true;
-        callbacks.forEach(f => f());
-        console.log('All dependencies have been resolved after other modules');
-      });
-  }
+  })();
 
   window.addEventListener('DOMContentLoaded', e => {
     if (!loadRemoteModules) {
