@@ -7,9 +7,11 @@
   <script type="text/javascript" src="js/modules.js"></script>
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
+    // loadModules(['/todo-list/js/remote-module.js']);
     require(['func', 'option', 'pubsub', 'todolist'], function (F, Option, PubSub, TodoList) {
       const elementOf = id => F.compose(Option.of, document.byId)(id);
       window.onloadafter(() => {
+        // apple('joe');
         elementOf('todo-input')
           .zip(
             elementOf('todo-list'),

@@ -1,6 +1,9 @@
 (global => {
   const modules = {};
   const cache = {};
+  const callbacks = [];
+  let loadRemoteModules = false;
+  let loaded = false;
 
   const define = (name, dependencies, factory) => {
     if (typeof name !== 'string') {
@@ -36,11 +39,53 @@
       console.log(`dependency resolved - ${dependency}`);
       return moduleInstance;
     }
-    callback.apply(global, dependencies.map(dep => resolve(dep, [])));
-    console.log('All dependencies have been resolved');
+    callbacks.push(() => callback.apply(global, dependencies.map(dep => resolve(dep, []))));
   }
+
+  const loadRemoteScript = src => new Promise(resolve => {
+    const $script = document.createElement('script');
+    $script.type = 'text/javascript';
+    $script.src = src;
+    $script.async = true;
+    document.head.appendChild($script);
+    const listener = eventName => {
+      const f = e => {
+        e.currentTarget.removeEventListener(eventName, f, false);
+        document.head.removeChild($script);
+        resolve();
+      }
+      return f;
+    }
+    $script.addEventListener('load', listener('load'), false);
+    $script.addEventListener('error', listener('error'), false);
+  });
+
+  const loadModules = (scriptUrls, callback) => {
+    if (loaded) {
+      throw new Error('Module loading is possible only once');
+    }
+    loadRemoteModules = true;
+    Promise
+      .all(scriptUrls.map(url => loadRemoteScript(url)))
+      .then((...args) => {
+        callback && callback.apply(null, args);
+        loaded = true;
+        callbacks.forEach(f => f());
+        console.log('All dependencies have been resolved');
+      });
+  }
+
+  window.addEventListener('load', e => {
+    if (!loadRemoteModules) {
+      loaded = true;
+      callbacks.forEach(f => f());
+      console.log('All dependencies have been resolved');
+    }
+  });
+
   global.define = define;
   global.require = require;
+  global.loadModules = loadModules;
 })(this);
 
 window.onloadafter = (() => {

@@ -1,7 +1,8 @@
 define('func', [], function () {
   const compose = (...fs) => x => fs.reverse().reduce((acc, f) => f(acc), x);
   const identity = x => x;
-  const empty = _ => {};
+  const empty = _ => {
+  };
   const isFunc = (...fs) => fs.reduce((acc, f) => typeof f === 'function', true);
   return {
     compose, identity, empty, isFunc
@@ -170,6 +171,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       this.subject = subject;
       this.createdAt = new Date().getTime();
     }
+
     static template = element => todo => Template.execute(element.innerHTML, {
       id: todo.id,
       subject: todo.subject,
@@ -253,7 +255,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
       });
     },
     render: (el, template) => () => {
-      if (el && template) {
+      if (el && template && template.base && template.ready && template.done) {
         el.innerHTML = template.base.innerHTML;
         const ulList = el.getElementsByTagName('ul');
         const readyTemplate = Todo.template(template.ready);
