@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="css/style.css"/>
   <script type="text/javascript">
     // loadModules(['/todo-list/js/remote-module.js']);
-    // loadModules(['/todo-list/js/remote-module.js']);
     require(['func', 'option', 'pubsub', 'todolist'], function (F, Option, PubSub, TodoList) {
       const elementOf = id => F.compose(Option.of, document.byId)(id);
       // apple('joe');
@@ -29,7 +28,7 @@
               });
               input.focus();
             });
-      }, 90);
+      }, 100);
     });
   </script>
 </head>
