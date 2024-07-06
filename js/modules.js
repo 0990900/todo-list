@@ -180,7 +180,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     static sorter = (a, b) => b.createdAt - a.createdAt;
   }
 
-  const todolist = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
+  const sharedData = JSON.parse(localStorage.getItem('todolist')) || {ready: [], done: []};
 
   /**
    * 수정이 정상적으로 완료되면 자동으로 로컬 스토리지에 저장 후 렌더링 한다.
@@ -191,7 +191,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
     }
     try {
       const result = execute();
-      localStorage.setItem('todolist', JSON.stringify(todolist));
+      localStorage.setItem('todolist', JSON.stringify(sharedData));
       PubSub.publish('todo:render');
       typeof onSuccess === 'function' && onSuccess(result);
     } catch (e) {
@@ -206,37 +206,37 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         if (!subjectTrimmed) {
           return;
         }
-        if (todolist.ready.some(item => item.subject === subjectTrimmed)
-          || todolist.done.some(item => item.subject === subjectTrimmed)) {
+        if (sharedData.ready.some(item => item.subject === subjectTrimmed)
+          || sharedData.done.some(item => item.subject === subjectTrimmed)) {
           return;
         }
-        todolist.ready.push(new Todo(subjectTrimmed));
-        todolist.ready.sort(Todo.sorter);
+        sharedData.ready.push(new Todo(subjectTrimmed));
+        sharedData.ready.sort(Todo.sorter);
         onActionSuccess();
       });
     },
     toggle: onActionSuccess => (id, value) => {
       typeof value === 'boolean' && modify(() => {
         if (value) {
-          const idx = todolist.ready.findIndex(todo => todo.id === id);
+          const idx = sharedData.ready.findIndex(todo => todo.id === id);
           if (idx < 0) {
             return;
           }
-          const todo = todolist.ready[idx];
+          const todo = sharedData.ready[idx];
           todo.done = value;
-          todolist.ready.splice(idx, 1);
-          todolist.done.push(todo);
-          todolist.done.sort(Todo.sorter);
+          sharedData.ready.splice(idx, 1);
+          sharedData.done.push(todo);
+          sharedData.done.sort(Todo.sorter);
         } else {
-          const idx = todolist.done.findIndex(todo => todo.id === id);
+          const idx = sharedData.done.findIndex(todo => todo.id === id);
           if (idx < 0) {
             return;
           }
-          const todo = todolist.done[idx];
+          const todo = sharedData.done[idx];
           todo.done = value;
-          todolist.done.splice(idx, 1);
-          todolist.ready.push(todo);
-          todolist.ready.sort(Todo.sorter);
+          sharedData.done.splice(idx, 1);
+          sharedData.ready.push(todo);
+          sharedData.ready.sort(Todo.sorter);
         }
         onActionSuccess();
       });
@@ -250,7 +250,7 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         array.splice(idx, 1);
         return true;
       }
-      modify(() => removeInner(todolist.ready, id) || removeInner(todolist.done, id), {
+      modify(() => removeInner(sharedData.ready, id) || removeInner(sharedData.done, id), {
         onSuccess: result => result ? onActionSuccess() : alert(`Todolist(${id}) not found`)
       });
     },
@@ -260,9 +260,9 @@ define('todolist', ['func', 'option', 'pubsub', 'dateformat', 'template'], funct
         const ulList = el.getElementsByTagName('ul');
         const readyTemplate = Todo.template(template.ready);
         const doneTemplate = Todo.template(template.done);
-        ulList[0].innerHTML = todolist.ready.map(readyTemplate).join('');
-        ulList[1].innerHTML = todolist.done.map(doneTemplate).join('');
-        if (todolist.done.length) {
+        ulList[0].innerHTML = sharedData.ready.map(readyTemplate).join('');
+        ulList[1].innerHTML = sharedData.done.map(doneTemplate).join('');
+        if (sharedData.done.length) {
           ulList[1].parentNode.className = 'box';
         }
       }

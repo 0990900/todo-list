@@ -87,12 +87,11 @@
   global.loadModules = loadModules;
 })(this);
 
-window.onloadafter = (() => {
-  const WAIT_FOR_RENDERING = 90;
-  return f => window.addEventListener('load', () => {
-    setTimeout(f, WAIT_FOR_RENDERING);
+window.onloadafter = (f, wait = 0) => {
+  window.addEventListener('load', () => {
+    (wait && !isNaN(wait) && wait > 0) ? setTimeout(f, wait) : f();
   });
-})();
+}
 
 document.byId = name => document.getElementById(name);
 document.create = name => document.createElement(name);
