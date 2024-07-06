@@ -26,6 +26,9 @@
                   input.value = '';
                 }
               });
+              window.addEventListener('click', e => {
+                e.target.tagName === 'HTML' && input.focus();
+              });
               input.focus();
             });
       }, 100);
