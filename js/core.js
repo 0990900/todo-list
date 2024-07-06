@@ -48,16 +48,15 @@
     $script.src = src;
     $script.async = true;
     document.head.appendChild($script);
-    const listener = eventName => {
-      const f = e => {
-        e.currentTarget.removeEventListener(eventName, f, false);
-        document.head.removeChild($script);
-        resolve();
-      }
-      return f;
+    const listener = e => {
+      e.currentTarget.removeEventListener('load', listener, false);
+      e.currentTarget.removeEventListener('error', listener, false);
+      document.head.removeChild($script);
+      console.log('remove script tag');
+      resolve();
     }
-    $script.addEventListener('load', listener('load'), false);
-    $script.addEventListener('error', listener('error'), false);
+    $script.addEventListener('load', listener, false);
+    $script.addEventListener('error', listener, false);
   });
 
   const loadModules = (scriptUrls, callback) => {
@@ -71,11 +70,11 @@
         callback && callback.apply(null, args);
         loaded = true;
         callbacks.forEach(f => f());
-        console.log('All dependencies have been resolved');
+        console.log('All dependencies have been resolved after other modules');
       });
   }
 
-  window.addEventListener('load', e => {
+  window.addEventListener('DOMContentLoaded', e => {
     if (!loadRemoteModules) {
       loaded = true;
       callbacks.forEach(f => f());
@@ -89,8 +88,8 @@
 })(this);
 
 window.onloadafter = (() => {
-  const WAIT_FOR_RENDERING = 102;
-  return f => window.addEventListener('DOMContentLoaded', () => {
+  const WAIT_FOR_RENDERING = 90;
+  return f => window.addEventListener('load', () => {
     setTimeout(f, WAIT_FOR_RENDERING);
   });
 })();
